@@ -18,6 +18,7 @@ class ViewController: UITableViewController {
         super.viewDidLoad()
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(promptForAnswer))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(startGame))
     
 //        this is how we tell swift to look at the "start.txt" file in our project
         if let startWordsURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
@@ -36,7 +37,7 @@ class ViewController: UITableViewController {
         
     }
 
-    func startGame() {
+    @objc func startGame() {
         title = allWords.randomElement()
         usedWords.removeAll(keepingCapacity: true)
         tableView.reloadData()
@@ -74,8 +75,6 @@ class ViewController: UITableViewController {
     func submit(_ answer: String) {
         let lowerAnswer = answer.lowercased()
         
-        let errorTitle: String
-        let errorMessage: String
         
         if isPossible(word: lowerAnswer) {
             if isOriginal(word: lowerAnswer) {
@@ -87,22 +86,19 @@ class ViewController: UITableViewController {
                     
                     return
                 } else {
-                    errorTitle = "Word not recognized"
-                    errorMessage = "You can't just make random words up buddy!"
+                    showErrorMessage(msg: 0)
                 }
             } else {
-                errorTitle = "Word used already"
-                errorMessage = "Be more original"
+                
+                showErrorMessage(msg: 1)
+        
             }
         } else {
-            errorTitle = "word not possible"
-            errorMessage = "You can't spell that from \(title!.lowercased())"
+            showErrorMessage(msg: 2)
         }
         
         
-        let ac = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
+
         
     }
     
@@ -130,8 +126,56 @@ class ViewController: UITableViewController {
         let checker = UITextChecker()
         let range = NSRange(location: 0, length: word.utf16.count)
         let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
+        if word.count < 3 {
+            print("word count being used")
+            return false
+        }
+        if word == title {
+            print("original word being used")
+            return false
+        }
         return misspelledRange.location == NSNotFound
+        
+        
+    }
+    
+    
+    func showErrorMessage(msg: Int) {
+        
+        let errorTitle: String
+        let errorMessage: String
+        
+        switch msg {
+        
+        case 1:
+            errorTitle = "Word used already"
+            errorMessage = "Be more original"
+            
+        case 2:
+            errorTitle = "word not possible"
+            errorMessage = "You can't spell that from \(title!.lowercased())"
+        
+        default:
+            errorTitle = "Word not recognized"
+            errorMessage = "You can't just make random words up buddy!"
+        }
+        
+        
+        let ac = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
+        
+        
     }
 
 }
 
+
+// CHALLENGE
+
+// 1. don't allow words less than 3 letters
+// 2. refactor all the else statements into a showErrorMessage() func
+// 3. add left bar button item that calls startGame() - done!
+
+// ** bonus **
+// if you enter an uppercase word, then the same word but lowercase - it counts as two words. Make it count only as one
